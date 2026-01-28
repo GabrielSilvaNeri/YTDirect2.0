@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>YTDirect • Links que abrem no app do YouTube</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: #0f0f0f;
+        color: #fff;
+        font-family: Arial, Helvetica, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .card {
+        background: #181818;
+        padding: 30px;
+        border-radius: 14px;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 0 25px rgba(0,0,0,.5);
+        text-align: center;
+    }
+
+    .logo {
+        font-size: 28px;
+        font-weight: bold;
+        color: #ff0000;
+        margin-bottom: 8px;
+    }
+
+    .subtitle {
+        font-size: 14px;
+        opacity: .85;
+        margin-bottom: 20px;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        margin-bottom: 12px;
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #ff0000;
+        color: #fff;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        opacity: .9;
+    }
+
+    .result {
+        margin-top: 20px;
+        display: none;
+    }
+
+    .result input {
+        background: #0f0f0f;
+        color: #fff;
+        font-size: 13px;
+    }
+
+    .copy {
+        margin-top: 8px;
+        background: #222;
+        font-size: 13px;
+    }
+
+    .error {
+        margin-top: 10px;
+        color: #ff6b6b;
+        font-size: 13px;
+        display: none;
+    }
+
+    .loading {
+        font-size: 14px;
+        opacity: .85;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="card" id="app">
+    <div class="logo">YTDirect</div>
+    <div class="subtitle">
+        Gere links que abrem direto no app do YouTube
+    </div>
+
+    <input id="youtubeLink" placeholder="Cole aqui o link do YouTube">
+    <button onclick="generateLink()">Gerar link</button>
+
+    <div class="error" id="error">
+        Link inválido. Cole um link válido do YouTube.
+    </div>
+
+    <div class="result" id="result">
+        <input id="resultLink" readonly>
+        <button class="copy" onclick="copyLink()">Copiar link</button>
+    </div>
+</div>
+
+<script>
+(function () {
+
+    // ==============================
+    // 🔴 MODO REDIRECIONAMENTO
+    // ==============================
+    const params = new URLSearchParams(window.location.search);
+    const videoId = params.get("v");
+
+    if (videoId) {
+        document.getElementById("app").innerHTML =
+            '<div class="loading">Abrindo no app do YouTube…</div>';
+
+        const desktopFallback = "https://www.youtube.com/watch?v=" + videoId;
+        const mobileFallback  = desktopFallback;
+        const youtubeApp     = "vnd.youtube://" + videoId;
+
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        if (isMobile) {
+            window.location.href = youtubeApp;
+
+            setTimeout(function () {
+                window.location.href = mobileFallback;
+            }, 350);
+        } else {
+            window.location.href = desktopFallback;
+        }
+
+        return; // ⛔ NÃO carrega o gerador
+    }
+
+    // ==============================
+    // 🟢 GERADOR DE LINKS
+    // ==============================
+    window.extractVideoId = function (url) {
+        try {
+            const parsed = new URL(url);
+
+            if (parsed.hostname.includes("youtu.be")) {
+                return parsed.pathname.replace("/", "");
+            }
+
+            if (parsed.searchParams.get("v")) {
+                return parsed.searchParams.get("v");
+            }
+
+            return null;
+        } catch {
+            return null;
+        }
+    };
+
+    window.generateLink = function () {
+        const input = document.getElementById("youtubeLink").value.trim();
+        const error = document.getElementById("error");
+        const result = document.getElementById("result");
+
+        error.style.display = "none";
+        result.style.display = "none";
+
+        const videoId = extractVideoId(input);
+
+        if (!videoId) {
+            error.style.display = "block";
+            return;
+        }
+
+        const redirectLink = "https://ytdirect.site/?v=" + videoId;
+
+        document.getElementById("resultLink").value = redirectLink;
+        result.style.display = "block";
+    };
+
+    window.copyLink = function () {
+        const field = document.getElementById("resultLink");
+        field.select();
+        document.execCommand("copy");
+    };
+
+})();
+</script>
+
+</body>
+</html>
